@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Strenne 2026 - Paestum</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f1923;font-family:Georgia,serif;color:#e8e0d5;min-height:100vh;padding-bottom:80px}
+button{cursor:pointer;font-family:Georgia,serif}
+input{font-family:Georgia,serif}
+input:focus{outline:none;border-color:#3d6bc4!important}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border-radius:8px;padding:10px 22px;font-size:.88rem;z-index:999;white-space:nowrap;box-shadow:0 4px 20px #00000088;display:none;pointer-events:none}
+#saving{position:fixed;top:12px;right:16px;font-size:.75rem;color:#3d6bc4;display:none}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{background:#2a3a4a;border-radius:3px}
+.tab-btn{padding:10px 28px;border:none;border-bottom:3px solid transparent;background:none;color:#6a8aaa;font-size:.9rem;font-family:Georgia,serif;cursor:pointer;transition:all .2s}
+.tab-btn.active{color:#e8e0d5;border-bottom-color:#3d6bc4;font-weight:bold}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast"></div>
+<div id="saving">Salvataggio...</div>
+<script>
+var BIN_ID_EDITORI = "69ddde75aaba882197f85b22";
+var BIN_ID_PDE = "69dce1d236566621a8aaaed5";
+var API_KEY = "$2a$10$PDx06HMIOnbSogmLIYKmnuRw265qOfoAeBG3SW0YlyMS6tcBirY0K";
+var NOTTI = ["4/5 mag","5/6 mag","6/7 mag","7/8 mag"];
+var LOGO = "data:image/png;base64,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8j/j2/cT2HOyH4eR/wAe37isSiAj7YzsgxLZPDdIcVdcSy5uidP4XOJOMYcG7ujRp7s/QpBREBrW0nDrdm2MzWiu9rlHj0tQBq6CQDg7vHUR1jsOhFMr7a7pjV+qLZXxyUtdSSFrt0keRzT1gjiD1gq+SjDb3s4bmNl9c7XC319ome1dXhEY1JiPfxJae3Udeo6+y77sJdnPuv8AozXFHWtS4lcLRtBza07oosoujWt9yyScysH7r9R9C3C0bfc7o90VfrbcW9Zmp9xx87C0fQoqe1zHuY9pa5p0II0IPYvK+jnaUKnegvoYFUnHgyw9n5R9Od1t3xiVnwpKWpDtf3XAf5rcLRt02fV2gnray3OPVU0rv82bwVSEWOex7aXBNej/AHktV1URdn152eZbEIZLhj12DhoIpnxPd813EehYK+7Etn90DnxW6e2yO9/Rzlvoa7eb6AqhrJ2nIL7aCDarzcKHTqp6l7B6AVQtlVKfuarXXXIn/JjLvRJrvvJxqGhz7HksTz72KsgLf8bSfqrX6DCtsmz+pNTY4ql8Our20UzZopPLEeJ8u75CsJads+0O36NN7FYwe9qoGP8A8Wgd9K3C0co28xkC7Y7QVI6zTSvhPodvr1w2hFaZKM116HidFvKyjYMe25iF/rVtDxyot0rxuvlZA7cI6DvxP8YDt03vIs7S4VjF3qxlmzC/w2i4t90aMh9NJrx3JYfeg6dHDTp01WLpdvWDXaDwW+2SuiY73TZYGVEX+ev+Ff3t9RsQudcy4We7Udjr9fFmpZ5Le5vdod1unlBBWGdOVPLVOUPTen6ovUlLjJP+mbc1k96dSU+T271nyCifv0VfTO34XP00Jik+C4cHRP0JGvAgby2ulhdvConjjbVGMRymP3LwCSO/TidOzeK+LH959Loy+RXmm6GyuDC/zuj0afmjyrLLlVJZeDRFGKy2tjteKXWve4RspqKWTXs0YdFB/I+otZsiuLmdDYIWO8u+5w+hq+3lNZ9B4CcHs8wnqp3t8PMZ15sAgiLh74nQkdQGnWpA2IYm/EMBpaKqZuV9S41VWOtr3AaN8zQ0eUFdBRdCylq4zax6IozrqrHI3hERco0hERAEREAREQBERAEREAREQBERAEREAREQBERAEREB4MURJJiYSek7oTmYf0UfzQvaJkHjmYf0UfzQnMw/oo/mhe0TIPHMw/oo/mhOZh/RR/NC9omQeOZh/RR/NCczD+ij+aF7RMg8czD+ij+aE5mH9FH80L2iZB8twljoLfU1jYWnmIXybo4b26CdNfMq5XHa5tEzcutWJWN1GJfFLqRrpZWg9Osh0a0d+g07VZdeYoo4mBkUbI2joDRoFqtq9OjlyhqfLPL5FdSDlweCGdj2xk2SujyLLZGVV0a7nIaZrt9kLvhPd75/0Dp48NJoRFCvcVK89U2ewgoLCCIioJhERAEX5p4wdqeAI014L9QBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAf//Z";
+
+var PERSONE_PDE = [
+  "Serena Bottalico",
+  "Claudia Brizzi",
+  "Claudia Calavetta",
+  "Rachele Cassoli",
+  "Roberta Cozzarizza",
+  "Elisa Ferrario",
+  "Anna Frosini",
+  "Federico Marchi",
+  "Laura Mercuri",
+  "Sergio Miserini",
+  "Valeria Pallotta",
+  "Roberta Parrella",
+  "Giulia Passarini",
+  "Chiara Piazzolla",
+  "Emidio Portelli",
+  "Federica Sala",
+  "Alberto Simola",
+  "Paolo Soraci",
+  "Amaranta Valzasina",
+  "Gabriele Ventura"
+];
+
+var DATI_EDITORI = { editori: [] };
+var DATI_PDE = { camere: [] }; // [{nome, notti:[]}]
+var isSaving = false;
+var tabAttivo = "editori";
+var fEditore = "";
+var fCamere = [{ nome: "", notti: [] }];
+var editoreInModifica = -1;
+
+function showToast(msg, type) {
+  var t = document.getElementById("toast");
+  t.textContent = msg; t.style.display = "block";
+  t.style.background = type==="err" ? "#4a1a1a" : "#1a3a2a";
+  t.style.border = type==="err" ? "1px solid #cc4444" : "1px solid #4acd7a";
+  t.style.color = type==="err" ? "#ff8888" : "#4acd7a";
+  clearTimeout(t._tid); t._tid = setTimeout(function(){ t.style.display="none"; }, 2800);
+}
+
+function setSaving(v) {
+  isSaving = v;
+  document.getElementById("saving").style.display = v ? "block" : "none";
+}
+
+// ===================== CARICAMENTO =====================
+function caricaDati() {
+  document.getElementById("root").innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80vh;gap:16px;color:#3d6bc4"><div style="font-size:2.5rem">📚</div><div>Caricamento...</div></div>';
+  var binId = tabAttivo === "pde" ? BIN_ID_PDE : BIN_ID_EDITORI;
+  fetch("https://api.jsonbin.io/v3/b/" + binId + "/latest", { headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(tabAttivo === "pde") { DATI_PDE = (d && d.camere) ? d : { camere: [] }; }
+      else { DATI_EDITORI = (d && d.editori) ? d : { editori: [] }; }
+      render();
+    })
+    .catch(function(){ render(); });
+}
+
+function salvaDati(cb) {
+  setSaving(true);
+  var binId = tabAttivo === "pde" ? BIN_ID_PDE : BIN_ID_EDITORI;
+  var body = tabAttivo === "pde" ? DATI_PDE : DATI_EDITORI;
+  fetch("https://api.jsonbin.io/v3/b/" + binId, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+    body: JSON.stringify(body)
+  })
+  .then(function(){ setSaving(false); if(cb) cb(); })
+  .catch(function(){ setSaving(false); showToast("Errore salvataggio","err"); });
+}
+
+function silentRefresh() {
+  if(isSaving) return;
+  var binId = tabAttivo === "pde" ? BIN_ID_PDE : BIN_ID_EDITORI;
+  fetch("https://api.jsonbin.io/v3/b/" + binId + "/latest", { headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!isSaving){
+        if(tabAttivo === "pde") { DATI_PDE = (d && d.camere) ? d : { camere: [] }; }
+        else { DATI_EDITORI = (d && d.editori) ? d : { editori: [] }; }
+        if(tabAttivo === "pde") renderTabPDE(); else renderTabEditori();
+      }
+    })
+    .catch(function(){});
+}
+
+function switchTab(tab) {
+  tabAttivo = tab;
+  caricaDati();
+}
+
+// ===================== TAB EDITORI =====================
+function toggleNotte(idx, notte) {
+  var c = fCamere[idx];
+  var i = c.notti.indexOf(notte);
+  if(i >= 0) c.notti.splice(i, 1); else c.notti.push(notte);
+  renderForm();
+}
+
+function selezionaTutteNotti(idx) {
+  fCamere[idx].notti = NOTTI.slice();
+  renderForm();
+}
+
+function syncNome(idx, val) { fCamere[idx].nome = val; }
+function syncEditore(val) { fEditore = val; }
+
+function aggiungiCamera() {
+  fCamere.push({ nome: "", notti: [] });
+  renderForm();
+  setTimeout(function(){
+    var inputs = document.querySelectorAll(".inp-cam");
+    if(inputs.length) inputs[inputs.length-1].focus();
+  }, 50);
+}
+
+function rimuoviCameraForm(idx) {
+  if(fCamere.length === 1) { fCamere[0] = { nome: "", notti: [] }; renderForm(); return; }
+  fCamere.splice(idx, 1); renderForm();
+}
+
+function salvaEditore() {
+  var nome = fEditore.trim();
+  if(!nome){ showToast("Inserisci il nome dell'editore","err"); return; }
+  var valide = fCamere.filter(function(c){ return c.nome.trim() && c.notti.length > 0; });
+  if(valide.length === 0){ showToast("Aggiungi almeno una camera con le notti selezionate","err"); return; }
+  var existing = null;
+  for(var i = 0; i < DATI_EDITORI.editori.length; i++){
+    if(DATI_EDITORI.editori[i].nome.toUpperCase() === nome.toUpperCase()){ existing = DATI_EDITORI.editori[i]; break; }
+  }
+  var nuoveCamere = valide.map(function(c){ return { nome: c.nome.trim(), notti: c.notti.slice() }; });
+  if(existing){ for(var j=0;j<nuoveCamere.length;j++) existing.camere.push(nuoveCamere[j]); }
+  else { DATI_EDITORI.editori.push({ nome: nome.toUpperCase(), camere: nuoveCamere }); }
+  salvaDati(function(){ showToast("Salvato ✓"); fEditore = ""; fCamere = [{ nome: "", notti: [] }]; render(); });
+}
+
+function modificaEditore(idx) {
+  var ed = DATI_EDITORI.editori[idx];
+  fEditore = ed.nome;
+  fCamere = ed.camere.map(function(c){ return { nome: c.nome, notti: c.notti.slice() }; });
+  editoreInModifica = idx;
+  var el = document.getElementById("form-section");
+  if(el) el.scrollIntoView({ behavior: "smooth" });
+  renderForm();
+}
+
+function salvaModifica() {
+  var nome = fEditore.trim();
+  if(!nome){ showToast("Inserisci il nome dell'editore","err"); return; }
+  var valide = fCamere.filter(function(c){ return c.nome.trim() && c.notti.length > 0; });
+  if(valide.length === 0){ showToast("Aggiungi almeno una camera","err"); return; }
+  DATI_EDITORI.editori[editoreInModifica] = { nome: nome.toUpperCase(), camere: valide.map(function(c){ return { nome: c.nome.trim(), notti: c.notti.slice() }; }) };
+  salvaDati(function(){ showToast("Modifiche salvate ✓"); fEditore = ""; fCamere = [{ nome: "", notti: [] }]; editoreInModifica = -1; render(); });
+}
+
+function annullaModifica() {
+  fEditore = ""; fCamere = [{ nome: "", notti: [] }]; editoreInModifica = -1; renderForm();
+}
+
+function rimuoviEditore(idx) {
+  if(!confirm("Rimuovere " + DATI_EDITORI.editori[idx].nome + "?")) return;
+  DATI_EDITORI.editori.splice(idx, 1);
+  salvaDati(function(){ render(); showToast("Editore rimosso"); });
+}
+
+function rimuoviCameraEditore(edIdx, camIdx) {
+  DATI_EDITORI.editori[edIdx].camere.splice(camIdx, 1);
+  if(DATI_EDITORI.editori[edIdx].camere.length === 0) DATI_EDITORI.editori.splice(edIdx, 1);
+  salvaDati(function(){ render(); showToast("Rimosso"); });
+}
+
+function renderForm() {
+  var el = document.getElementById("form-section");
+  if(!el) return;
+  var camereHTML = "";
+  for(var i = 0; i < fCamere.length; i++){
+    var c = fCamere[i];
+    var nottiHTML = "";
+    for(var n = 0; n < NOTTI.length; n++){
+      var sel = c.notti.indexOf(NOTTI[n]) >= 0;
+      nottiHTML += "<button onclick=\"toggleNotte(" + i + ",'" + NOTTI[n] + "')\" style=\"border:1px solid " + (sel?"#4acd7a":"#2a3a5a") + ";border-radius:6px;padding:5px 11px;background:" + (sel?"#1a3a2a":"#0f1923") + ";color:" + (sel?"#4acd7a":"#4a6a9a") + ";font-size:.78rem;font-weight:" + (sel?"bold":"normal") + "\">" + NOTTI[n] + "</button>";
+    }
+    var totN = c.notti.length;
+    camereHTML += "<div style=\"background:#0f1923;border:1px solid #1a2a4a;border-radius:10px;padding:14px 16px;margin-bottom:10px;position:relative\">"
+      + (fCamere.length > 1 ? "<button onclick=\"rimuoviCameraForm(" + i + ")\" style=\"position:absolute;top:8px;right:10px;background:none;border:none;color:#4a5a6a;font-size:1.1rem\">x</button>" : "")
+      + "<div style=\"font-size:.7rem;color:#3d6bc4;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px\">Camera " + (i+1) + "</div>"
+      + "<input class=\"inp-cam\" type=\"text\" placeholder=\"Nome e cognome...\" value=\"" + c.nome + "\" oninput=\"syncNome(" + i + ",this.value)\" style=\"width:100%;background:#162030;border:1px solid #1a2a4a;border-radius:7px;padding:9px 12px;color:#e8e0d5;font-size:.9rem;margin-bottom:10px\"/>"
+      + "<div style=\"display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:" + (totN>0?"8px":"0") + "\">" + nottiHTML
+      + "<button onclick=\"selezionaTutteNotti(" + i + ")\" style=\"border:1px solid #3d6bc4;border-radius:6px;padding:5px 11px;background:#0a1020;color:#3d6bc4;font-size:.75rem\">Seleziona tutte</button>"
+      + "</div>"
+      + (totN > 0 ? "<div style=\"font-size:.75rem;color:#8ab4d4\">Totale: <strong>" + totN + " " + (totN===1?"notte":"notti") + "</strong></div>" : "")
+      + "</div>";
+  }
+  el.innerHTML = "<div style=\"font-size:.75rem;color:#3d6bc4;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px\">" + (editoreInModifica >= 0 ? "Modifica Editore" : "Nuovo Editore") + "</div>"
+    + "<input id=\"inp-editore\" type=\"text\" placeholder=\"Nome editore (es. ABOCA)...\" value=\"" + fEditore + "\" oninput=\"syncEditore(this.value)\" style=\"width:100%;background:#0f1923;border:1px solid #1a2a4a;border-radius:8px;padding:10px 14px;color:#e8e0d5;font-size:1rem;margin-bottom:14px\"/>"
+    + camereHTML
+    + "<div style=\"display:flex;gap:10px;flex-wrap:wrap;margin-top:6px\">"
+    + "<button onclick=\"aggiungiCamera()\" style=\"background:#162030;border:1px solid #3d6bc4;border-radius:8px;padding:9px 18px;color:#3d6bc4;font-size:.85rem\">+ Aggiungi camera</button>"
+    + (editoreInModifica >= 0
+      ? "<button onclick=\"salvaModifica()\" style=\"background:#3d6bc4;border:none;border-radius:8px;padding:9px 24px;color:#fff;font-size:.9rem;font-weight:bold\">Salva modifiche</button><button onclick=\"annullaModifica()\" style=\"background:none;border:1px solid #3a4a5a;border-radius:8px;padding:9px 18px;color:#5a7a9a;font-size:.85rem\">Annulla</button>"
+      : "<button onclick=\"salvaEditore()\" style=\"background:#3d6bc4;border:none;border-radius:8px;padding:9px 24px;color:#fff;font-size:.9rem;font-weight:bold\">Salva</button>")
+    + "</div>";
+}
+
+function renderTabEditori() {
+  var totCamere = 0, totNotti = 0;
+  for(var i=0;i<DATI_EDITORI.editori.length;i++){
+    totCamere += DATI_EDITORI.editori[i].camere.length;
+    for(var j=0;j<DATI_EDITORI.editori[i].camere.length;j++) totNotti += DATI_EDITORI.editori[i].camere[j].notti.length;
+  }
+
+  // Riepilogo notti
+  var riepilogoHTML = "";
+  for(var n=0;n<NOTTI.length;n++){
+    var tot = 0;
+    for(var i=0;i<DATI_EDITORI.editori.length;i++) for(var j=0;j<DATI_EDITORI.editori[i].camere.length;j++) if(DATI_EDITORI.editori[i].camere[j].notti.indexOf(NOTTI[n])>=0) tot++;
+    riepilogoHTML += "<div style=\"flex:1;min-width:110px;background:#162030;border:1px solid #2a4a8a44;border-radius:10px;padding:12px 16px;text-align:center\">"
+      + "<div style=\"font-size:.72rem;color:#6a8aaa;margin-bottom:6px\">" + NOTTI[n] + "</div>"
+      + "<div style=\"font-size:1.8rem;font-weight:bold;color:#3d6bc4;line-height:1\">" + tot + "</div>"
+      + "<div style=\"font-size:.68rem;color:#4a6a9a;margin-top:4px\">" + (tot===1?"camera":"camere") + "</div>"
+      + "</div>";
+  }
+
+  // Lista editori
+  var listaHTML = "";
+  if(DATI_EDITORI.editori.length === 0){
+    listaHTML = "<div style=\"color:#3a5a7a;font-style:italic;font-size:.9rem;text-align:center;padding:30px 0\">Nessun editore ancora</div>";
+  } else {
+    for(var i=0;i<DATI_EDITORI.editori.length;i++){
+      var ed = DATI_EDITORI.editori[i];
+      var edNotti = 0;
+      var camereHTML = "";
+      for(var j=0;j<ed.camere.length;j++){
+        var cam = ed.camere[j];
+        edNotti += cam.notti.length;
+        var tags = cam.notti.map(function(x){ return "<span style=\"background:#1a3a2a;color:#4acd7a;border-radius:4px;padding:2px 8px;font-size:.72rem\">" + x + "</span>"; }).join(" ");
+        camereHTML += "<div style=\"display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0f1923;border-radius:8px;margin-bottom:6px;gap:10px\">"
+          + "<div style=\"flex:1\">"
+          + "<div style=\"display:flex;align-items:center;gap:8px;margin-bottom:5px\">"
+          + "<span style=\"font-size:.92rem;color:#e8e0d5;font-weight:bold\">" + cam.nome + "</span>"
+          + "<span style=\"background:#1a2a3a;color:#8ab4d4;border-radius:10px;padding:1px 9px;font-size:.72rem\">" + cam.notti.length + " " + (cam.notti.length===1?"notte":"notti") + "</span>"
+          + "</div>"
+          + "<div style=\"display:flex;flex-wrap:wrap;gap:4px\">" + tags + "</div>"
+          + "</div>"
+          + "<button onclick=\"rimuoviCameraEditore(" + i + "," + j + ")\" style=\"background:none;border:1px solid #3a4a5a;border-radius:4px;color:#5a6a7a;font-size:.7rem;padding:2px 7px;flex-shrink:0\">X</button>"
+          + "</div>";
+      }
+      listaHTML += "<div style=\"background:#162030;border:1px solid #2a4a8a44;border-left:4px solid #3d6bc4;border-radius:12px;margin-bottom:16px;overflow:hidden\">"
+        + "<div style=\"padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px\">"
+        + "<div style=\"font-size:1.15rem;font-weight:bold;color:#e8e0d5\">" + ed.nome + "</div>"
+        + "<div style=\"display:flex;align-items:center;gap:8px\">"
+        + "<span style=\"background:#1a2030;color:#8ab4d4;border-radius:10px;padding:2px 10px;font-size:.75rem\">" + ed.camere.length + " " + (ed.camere.length===1?"camera":"camere") + " · " + edNotti + " " + (edNotti===1?"notte":"notti") + "</span>"
+        + "<button onclick=\"modificaEditore(" + i + ")\" style=\"background:none;border:1px solid #2a4a8a;border-radius:4px;color:#3d6bc4;font-size:.7rem;padding:2px 8px\">Modifica</button>"
+        + "<button onclick=\"rimuoviEditore(" + i + ")\" style=\"background:none;border:1px solid #4a2a2a;border-radius:4px;color:#7a4a4a;font-size:.7rem;padding:2px 8px\">Rimuovi</button>"
+        + "</div></div>"
+        + "<div style=\"padding:0 16px 14px\">" + camereHTML + "</div>"
+        + "</div>";
+    }
+  }
+
+  document.getElementById("tab-content").innerHTML =
+    "<div style=\"background:#0a1020;border:1px solid #2a4a8a33;border-radius:12px;padding:16px 20px;margin-bottom:24px\">"
+    + "<div style=\"font-size:.75rem;color:#3d6bc4;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px\">Riepilogo notti generale</div>"
+    + "<div style=\"display:flex;flex-wrap:wrap;gap:10px\">" + riepilogoHTML + "</div>"
+    + "</div>"
+    + "<div style=\"background:#0a1020;border:1px solid #2a4a8a33;border-left:4px solid #3d6bc4;border-radius:12px;padding:20px;margin-bottom:28px\" id=\"form-section\"></div>"
+    + "<div style=\"font-size:.75rem;color:#3d6bc4;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px\">Editori registrati</div>"
+    + listaHTML;
+
+  renderForm();
+}
+
+// ===================== TAB PDE =====================
+function toggleNottePDE(nomePersona, notte) {
+  var found = null;
+  for(var i=0;i<DATI_PDE.camere.length;i++) if(DATI_PDE.camere[i].nome===nomePersona){ found=DATI_PDE.camere[i]; break; }
+  if(!found){ found={nome:nomePersona,notti:[]}; DATI_PDE.camere.push(found); }
+  var idx = found.notti.indexOf(notte);
+  if(idx>=0) found.notti.splice(idx,1); else found.notti.push(notte);
+  salvaDati(function(){ renderTabPDE(); });
+}
+
+function selezionaTuttePDE(nomePersona) {
+  var found = null;
+  for(var i=0;i<DATI_PDE.camere.length;i++) if(DATI_PDE.camere[i].nome===nomePersona){ found=DATI_PDE.camere[i]; break; }
+  if(!found){ found={nome:nomePersona,notti:[]}; DATI_PDE.camere.push(found); }
+  found.notti = NOTTI.slice();
+  salvaDati(function(){ renderTabPDE(); });
+}
+
+function deselezionaTuttePDE(nomePersona) {
+  for(var i=0;i<DATI_PDE.camere.length;i++) if(DATI_PDE.camere[i].nome===nomePersona){ DATI_PDE.camere[i].notti=[]; break; }
+  salvaDati(function(){ renderTabPDE(); });
+}
+
+function getNottiPDE(nomePersona) {
+  for(var i=0;i<DATI_PDE.camere.length;i++) if(DATI_PDE.camere[i].nome===nomePersona) return DATI_PDE.camere[i].notti;
+  return [];
+}
+
+function renderTabPDE() {
+  // Riepilogo notti PDE
+  var riepilogoHTML = "";
+  for(var n=0;n<NOTTI.length;n++){
+    var tot = 0;
+    for(var i=0;i<DATI_PDE.camere.length;i++) if(DATI_PDE.camere[i].notti.indexOf(NOTTI[n])>=0) tot++;
+    riepilogoHTML += "<div style=\"flex:1;min-width:110px;background:#162030;border:1px solid #2a4a8a44;border-radius:10px;padding:12px 16px;text-align:center\">"
+      + "<div style=\"font-size:.72rem;color:#6a8aaa;margin-bottom:6px\">" + NOTTI[n] + "</div>"
+      + "<div style=\"font-size:1.8rem;font-weight:bold;color:#3d6bc4;line-height:1\">" + tot + "</div>"
+      + "<div style=\"font-size:.68rem;color:#4a6a9a;margin-top:4px\">" + (tot===1?"persona":"persone") + "</div>"
+      + "</div>";
+  }
+
+  // Lista persone PDE
+  var personeHTML = "";
+  for(var p=0;p<PERSONE_PDE.length;p++){
+    var nome = PERSONE_PDE[p];
+    var notti = getNottiPDE(nome);
+    var nottiHTML = "";
+    for(var n=0;n<NOTTI.length;n++){
+      var sel = notti.indexOf(NOTTI[n]) >= 0;
+      nottiHTML += "<button onclick=\"toggleNottePDE('" + nome.replace(/'/g,"\\'") + "','" + NOTTI[n] + "')\" style=\"border:1px solid " + (sel?"#4acd7a":"#2a3a5a") + ";border-radius:6px;padding:5px 11px;background:" + (sel?"#1a3a2a":"#0f1923") + ";color:" + (sel?"#4acd7a":"#4a6a9a") + ";font-size:.78rem;font-weight:" + (sel?"bold":"normal") + "\">" + NOTTI[n] + "</button>";
+    }
+    var tutteSelezionate = notti.length === NOTTI.length;
+    personeHTML += "<div style=\"background:#162030;border:1px solid #1a2a4a;border-radius:10px;padding:14px 16px;margin-bottom:10px\">"
+      + "<div style=\"display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px\">"
+      + "<div style=\"font-size:.95rem;font-weight:bold;color:#e8e0d5\">" + nome + "</div>"
+      + "<div style=\"display:flex;align-items:center;gap:8px\">"
+      + (notti.length > 0 ? "<span style=\"background:#1a2a3a;color:#8ab4d4;border-radius:10px;padding:1px 9px;font-size:.72rem\">" + notti.length + " " + (notti.length===1?"notte":"notti") + "</span>" : "")
+      + "</div></div>"
+      + "<div style=\"display:flex;flex-wrap:wrap;gap:6px;align-items:center\">"
+      + nottiHTML
+      + "<button onclick=\"" + (tutteSelezionate ? "deselezionaTuttePDE" : "selezionaTuttePDE") + "('" + nome.replace(/'/g,"\\'") + "')\" style=\"border:1px solid #3d6bc4;border-radius:6px;padding:5px 11px;background:#0a1020;color:#3d6bc4;font-size:.75rem\">"
+      + (tutteSelezionate ? "Deseleziona tutte" : "Seleziona tutte") + "</button>"
+      + "</div>"
+      + "</div>";
+  }
+
+  document.getElementById("tab-content").innerHTML =
+    "<div style=\"background:#0a1020;border:1px solid #2a4a8a33;border-radius:12px;padding:16px 20px;margin-bottom:24px\">"
+    + "<div style=\"font-size:.75rem;color:#3d6bc4;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px\">Riepilogo notti generale</div>"
+    + "<div style=\"display:flex;flex-wrap:wrap;gap:10px\">" + riepilogoHTML + "</div>"
+    + "</div>"
+    + "<div style=\"font-size:.75rem;color:#3d6bc4;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px\">Team PDE</div>"
+    + personeHTML;
+}
+
+// ===================== RENDER PRINCIPALE =====================
+function render() {
+  var totEditori = DATI_EDITORI.editori.length;
+  var totPDE = DATI_PDE.camere.filter(function(c){ return c.notti.length > 0; }).length;
+
+  document.getElementById("root").innerHTML =
+    "<div style=\"background:linear-gradient(135deg,#1a3a7a,#2a4a9a);border-bottom:1px solid #1a3a7a;padding:20px 24px 0\">"
+    + "<div style=\"max-width:860px;margin:0 auto\">"
+    + "<div style=\"display:flex;align-items:center;gap:16px;margin-bottom:16px\">"
+    + "<img src=\"" + LOGO + "\" style=\"height:48px;background:white;border-radius:6px;padding:4px 8px;\"/>"
+    + "<div>"
+    + "<div style=\"font-size:1.4rem;font-weight:bold;color:#fff\">Strenne 2026 - Paestum</div>"
+    + "<div style=\"font-size:.75rem;color:#aac4ee;letter-spacing:2px;text-transform:uppercase\">Maggio 2026</div>"
+    + "</div></div>"
+    + "<div style=\"display:flex;align-items:center;gap:4px\">"
+    + "<button class=\"tab-btn " + (tabAttivo==="editori"?"active":"") + "\" onclick=\"switchTab('editori')\">Editori</button>"
+    + "<button class=\"tab-btn " + (tabAttivo==="pde"?"active":"") + "\" onclick=\"switchTab('pde')\">Camere PDE</button>"
+    + "<div style=\"flex:1\"></div>"
+    + "<button onclick=\"caricaDati()\" style=\"background:none;border:1px solid #4a6aaa;border-radius:6px;color:#aac4ee;font-size:.72rem;padding:3px 10px;margin-bottom:8px\">↻</button>"
+    + "<button onclick=\"esportaExcel()\" style=\"background:#1a2a5a;border:1px solid #4acd7a;border-radius:6px;color:#4acd7a;font-size:.72rem;padding:3px 10px;margin-bottom:8px;margin-left:6px\">⬇ Excel</button>"
+    + "</div></div></div>"
+    + "<div style=\"max-width:860px;margin:0 auto;padding:20px 16px 0\" id=\"tab-content\"></div>";
+
+  if(tabAttivo === "pde") renderTabPDE();
+  else renderTabEditori();
+}
+
+function esportaExcel() {
+  var wb = XLSX.utils.book_new();
+
+  // Sheet editori
+  var righe1 = [["Editore","Nome","4/5 mag","5/6 mag","6/7 mag","7/8 mag","Totale notti"]];
+  for(var i=0;i<DATI_EDITORI.editori.length;i++){
+    var ed = DATI_EDITORI.editori[i];
+    for(var j=0;j<ed.camere.length;j++){
+      var cam = ed.camere[j];
+      righe1.push([ed.nome, cam.nome,
+        cam.notti.indexOf("4/5 mag")>=0?"X":"",
+        cam.notti.indexOf("5/6 mag")>=0?"X":"",
+        cam.notti.indexOf("6/7 mag")>=0?"X":"",
+        cam.notti.indexOf("7/8 mag")>=0?"X":"",
+        cam.notti.length]);
+    }
+  }
+  var ws1 = XLSX.utils.aoa_to_sheet(righe1);
+  ws1["!cols"] = [{wch:25},{wch:25},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws1, "Editori");
+
+  // Sheet PDE
+  var righe2 = [["Nome","4/5 mag","5/6 mag","6/7 mag","7/8 mag","Totale notti"]];
+  for(var p=0;p<PERSONE_PDE.length;p++){
+    var notti = getNottiPDE(PERSONE_PDE[p]);
+    righe2.push([PERSONE_PDE[p],
+      notti.indexOf("4/5 mag")>=0?"X":"",
+      notti.indexOf("5/6 mag")>=0?"X":"",
+      notti.indexOf("6/7 mag")>=0?"X":"",
+      notti.indexOf("7/8 mag")>=0?"X":"",
+      notti.length]);
+  }
+  var ws2 = XLSX.utils.aoa_to_sheet(righe2);
+  ws2["!cols"] = [{wch:25},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws2, "Camere PDE");
+
+  XLSX.writeFile(wb, "Strenne_Paestum_2026.xlsx");
+  showToast("File Excel scaricato");
+}
+
+caricaDati();
+setInterval(silentRefresh, 5000);
+</script>
+</body>
+</html>
